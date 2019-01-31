@@ -44,13 +44,13 @@ class Stock(object):
     trade_volume = None
 
     def display_print(self, rename=None, href=True):
-        print '%s %s %s %.2f %.2f%% | color=%s %s' % (
+        print '%s %s %s %s %.2f%% | color=%s %s' % (
             '▲' if self.change_percent > 0 else '▼' if self.change_percent < 0 else '◆',
             rename if rename is not None else self.name,
             format(self.show_price, '.%df' % self.decimal_digit),
-            self.close_price * self.change_percent / 100,
+            format(self.close_price * self.change_percent / 100, '.%df' % self.decimal_digit),
             self.change_percent,
-            'green' if self.change_percent > 0 else 'red' if self.change_percent < 0 else 'gray',
+            'red' if self.change_percent > 0 else 'green' if self.change_percent < 0 else 'gray',
             ('href=%s' % self.detail_url) if href else '',
         )
 
@@ -431,7 +431,7 @@ def test():
 if __name__ == '__main__':
     # test()
     a = external_futures('CL')
-    a.display_print('USOL', False)
+    a.display_print('OL', False)
     print '---'
     a.display_print('USOL')
     exchange_rate_stock('USDCNY').display_print('USDCNY')
