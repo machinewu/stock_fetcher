@@ -434,6 +434,6 @@ if __name__ == '__main__':
     a.display_print('USOL', False)
     print '---'
     a.display_print('USOL')
-    exchange_rate_stock('USDCNY').display_print('USDCNYture')
+    exchange_rate_stock('USDCNY').display_print('USDCNY')
     #inner_future('AU0').display_print('CNAU')
     #inner_future('AG0').display_print('CNAG')
