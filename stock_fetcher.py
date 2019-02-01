@@ -455,7 +455,7 @@ def get_bitbar_version():
 
 
 def restart_bitbar():
-    subprocess.Popen(["""osascript -e 'tell application "BitBar" to quit' -e 'delay 2' -e 'tell application "BitBar" to activate'"""], shell=True, executable='/bin/bash', stdout=subprocess.PIPE, universal_newlines=True).wait()
+    subprocess.Popen(["""osascript -e 'tell application "BitBar" to quit' -e 'delay 2' -e 'tell application "BitBar" to activate'"""], shell=True, executable='/bin/sh')
 
 
 def test():
