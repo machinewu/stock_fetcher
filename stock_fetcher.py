@@ -1,5 +1,5 @@
 #!/usr/bin/env python2.7
-#coding=utf-8
+# coding=utf-8
 
 import sys
 import re
@@ -10,7 +10,6 @@ import traceback
 import StringIO
 import gzip
 import subprocess
-import shlex
 
 rd = random.Random()
 
@@ -435,7 +434,11 @@ def display(msg):
 
 
 def check_bitbar_running(process_id):
-    return '%s BitBar' % process_id == str(subprocess.Popen(['ps -xco pid=,command= -p %s' % process_id], shell=True, executable='/bin/sh', stdout=subprocess.PIPE, universal_newlines=True).communicate()[0]).strip()
+    return ('%s BitBar' % process_id) == str(subprocess.Popen(['ps -xco pid=,command= -p %s' % process_id], shell=True, executable='/bin/sh', stdout=subprocess.PIPE, universal_newlines=True).communicate()[0]).strip()
+
+
+def get_active_display_number():
+    return int(str(subprocess.Popen(['ioreg -n IODisplayWrangler | grep IODisplayConnect | grep " active," | wc -l'], shell=True, executable='/bin/sh', stdout=subprocess.PIPE, universal_newlines=True).communicate()[0]).strip())
 
 
 def get_bitbar_process_id():
@@ -455,7 +458,7 @@ def get_bitbar_version():
 
 
 def restart_bitbar():
-    subprocess.Popen(["""osascript -e 'tell application "BitBar" to quit' -e 'delay 2' -e 'tell application "BitBar" to activate'"""], shell=True, executable='/bin/sh')
+    subprocess.Popen(["""osascript -e 'tell application "BitBar" to quit' -e 'delay 3' -e 'tell application "BitBar" to activate' &>/dev/null &"""], shell=True, executable='/bin/sh')
 
 
 def test():
@@ -474,22 +477,34 @@ def run():
         exit(1)
 
     bitbar_process_id = get_bitbar_process_id()
+    active_display_number = get_active_display_number()
 
     if bitbar_process_id is not None:
         # restart bitbar every day for release memory
         restart_bitbar_time = int(time.time()) + 86400
-        check_interval_second = 180
+        check_interval_second = 60
         next_check_time = int(time.time()) + check_interval_second
+        which_display = 0
         while True:
             try:
                 output = list()
-                a = external_futures('CL')
-                output.append(a.display_format('OL', href=False))
+                # (stock, long_display_name, short_display_name)
+                stocks = [(external_futures('CL'), 'USOL', 'OL'), (exchange_rate_stock('USDCNY'), 'USDCNY', 'UC')]
+
+                output.append(stocks[which_display][0].display_format(stocks[which_display][2], href=False))
+                # 状态栏轮流切换模式显示stocks
+                # which_display = (which_display + 1) % len(stocks)
+                # 状态栏固定模式显示某个stocks
+                which_display = 0
+
                 output.append('---')
-                output.append(a.display_format('USOL'))
-                output.append(exchange_rate_stock('USDCNY').display_format('USDCNY'))
-                #output.append(inner_future('AU0').display_format('CNAU'))
-                #output.append(inner_future('AG0').display_format('CNAG'))
+                for s in stocks:
+                    output.append(s[0].display_format(s[1]))
+
+                # output.append(inner_future('AU0').display_format('CNAU'))
+                # output.append(inner_future('AG0').display_format('CNAG'))
+
+                # output.append('pid: %s | color=blue' % bitbar_process_id)
 
                 display(output)
                 time.sleep(3)
@@ -512,7 +527,7 @@ def run():
             if t > next_check_time:
                 next_check_time = t + check_interval_second
 
-                if t > restart_bitbar_time:
+                if t > restart_bitbar_time or get_active_display_number() != active_display_number:
                     restart_bitbar()
                     # after restart bitbar, exit program
                     exit(0)
