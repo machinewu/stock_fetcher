@@ -67,7 +67,7 @@ class Stock(object):
         s.time = f[6]
         s.open_price = float(f[7])
         s.close_price = float(f[8])
-        s.open_interest = int(f[9])
+        s.open_interest = int(float(f[9]))
         s.buy_quantity = int(f[10])
         s.sell_quantity = int(f[11])
         s.date = f[12].replace('/', '-')
@@ -249,6 +249,10 @@ def fetch(url, headers=None):
             gz = gzip.GzipFile(fileobj=StringIO.StringIO(raw_data))
             raw_data = gz.read()
             gz.close()
+
+        if 'charset=gb' in resp.getheader('content-type', '').lower():
+            charset = re.sub(r'^.*?charset=(gb\w+).*$', r'\1', resp.getheader('content-type', '').lower())
+            raw_data = raw_data.decode(charset).encode('utf-8')
 
         conn.close()
         return status_code, raw_data
