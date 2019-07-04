@@ -70,7 +70,7 @@ class Stock(object):
         s.time = f[6]
         s.open_price = float(f[7])
         s.close_price = float(f[8])
-        s.open_interest = int(f[9])
+        s.open_interest = float(f[9])
         s.buy_quantity = int(f[10])
         s.sell_quantity = int(f[11])
         s.date = f[12].replace('/', '-')
@@ -252,6 +252,10 @@ def fetch(url, headers=None):
             gz = gzip.GzipFile(fileobj=StringIO.StringIO(raw_data))
             raw_data = gz.read()
             gz.close()
+
+        if 'charset=gb' in resp.getheader('content-type', '').lower():
+            charset = re.sub(r'^.*?charset=(gb\w+).*$', r'\1', resp.getheader('content-type', '').lower())
+            raw_data = raw_data.decode(charset).encode('utf-8')
 
         conn.close()
         return status_code, raw_data
@@ -537,6 +541,66 @@ def run():
                     exit(0)
 
 
+def run_windows_console():
+    import os
+    # change windows console to utf-8 active code page
+    os.popen('mode con cols=40 lines=10')
+    os.popen('color f0')
+    os.popen('chcp 65001')
+
+    import colorama
+    from colorama import Fore, Back, Style
+    colorama.init(autoreset=True)
+
+    def color_console(msgs):
+        transfer_msgs = list()
+        for msg in msgs:
+            [new_msg, msg_style] = msg.split('|', 2)
+            if 'color=red' in msg_style:
+                new_msg = Fore.LIGHTRED_EX + Back.LIGHTWHITE_EX + Style.BRIGHT + new_msg
+            elif 'color=green' in msg_style:
+                new_msg = Fore.LIGHTGREEN_EX + Back.LIGHTWHITE_EX + Style.BRIGHT + new_msg
+            elif 'color=gray' in msg_style:
+                new_msg = Fore.LIGHTBLUE_EX + Back.LIGHTWHITE_EX + Style.BRIGHT + new_msg
+            else:
+                # warning message
+                new_msg = Fore.LIGHTYELLOW_EX + Back.RED + Style.BRIGHT + new_msg
+            transfer_msgs.append(new_msg)
+        
+        sys.stdout.write(str('\n'.join(transfer_msgs)) + '\n')
+        sys.stdout.flush()
+
+    which_display = 0
+    while True:
+        try:
+            output = list()
+            # (stock, long_display_name, short_display_name)
+            stocks = [
+                (external_futures('CL'), 'USOL', 'OL'),
+            #    (exchange_rate_stock('USDCNY'), 'USDCNY', 'UC'),
+            ]
+
+            output.append('%s %s' % (stocks[which_display][0].time, stocks[which_display][0].display_format(stocks[which_display][2], href=False)))
+            # 状态栏轮流切换模式显示stocks
+            # which_display = (which_display + 1) % len(stocks)
+            # 状态栏固定模式显示某个stocks
+            which_display = 0
+
+            #for s in stocks:
+            #    output.append(s[0].display_format(s[1]))
+
+            color_console(output)
+        except Exception as e:
+            # traceback.print_exc()
+            output = list()
+            output.append('Runtime error: %s | color=yellow' % e.message)
+
+            color_console(output)
+            # don't know what's error cause, sleep more long
+        time.sleep(2)
+
+
 if __name__ == '__main__':
     # test()
-    run()
+    # run()
+    run_windows_console()
