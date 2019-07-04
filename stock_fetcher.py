@@ -59,11 +59,10 @@ class Stock(object):
 
     @staticmethod
     def external_futures_make(f, detail_url):
-        # var hq_str_hf_CL="54.05,1.3881,54.05,54.06,54.11,53.09,22:51:58,53.31,53.26,23805,0,0,2019-01-30,纽约原油";
+        # var hq_str_hf_CL="56.960,,56.970,56.980,57.570,56.870,13:19:10,57.340,57.380,312538.000,16,17,2019-07-04,纽约原油";
         assert len(f) == 14
         s = Stock()
         s.show_price = float(f[0])
-        s.change_percent = float(f[1])
         s.buy_price = float(f[2])
         s.sell_price = float(f[3])
         s.highest_price = float(f[4])
@@ -77,6 +76,8 @@ class Stock(object):
         s.date = f[12].replace('/', '-')
         s.name = f[13]
         s.detail_url = detail_url
+
+        s.change_percent = float(f[1]) if f[1] else ((s.show_price - s.close_price) * 100.0 / s.close_price)
         return s
 
     @staticmethod
